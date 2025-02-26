@@ -1,44 +1,57 @@
-📌 Open Ruche - Suivi Connecté des Abeilles
-Un projet IoT pour surveiller la santé des ruches en temps réel 🐝📡
-📖 Présentation
+# 📌 Open Ruche - Suivi Connecté des Abeilles  
+### Un projet IoT pour surveiller la santé des ruches en temps réel 🐝📡  
 
-Le projet Open Ruche vise à suivre l’évolution des colonies d’abeilles grâce à un système IoT autonome équipé de capteurs.
-Les données (température, humidité, poids, luminosité...) sont transmises via LoRaWAN et affichées sur une interface web.
-Des alertes (SMS/email) sont envoyées en cas de comportement anormal.
-📋 Objectifs
+---
 
-✅ Surveiller la santé des abeilles et leur activité.
-✅ Alerter en cas d’essaimage, de baisse de poids, ou de vol de la ruche.
-✅ Stocker et visualiser les données sur Ubidots STEM puis BEEP Monitor.
-✅ Un système autonome, alimenté par batterie LiPo et panneaux solaires.
-🛠️ Matériel Utilisé
-1️⃣ Microcontrôleur
+## 📖 Présentation  
+Le projet **Open Ruche** vise à suivre l’évolution des colonies d’abeilles grâce à un **système IoT autonome** équipé de capteurs.  
+Les données (**température, humidité, poids, luminosité...**) sont transmises via **LoRaWAN** et affichées sur une **interface web**.  
+Des **alertes (SMS/email)** sont envoyées en cas de comportement anormal.  
 
-    Arduino MKR WAN 1310 (LPWAN LoRaWAN intégré)
+---
 
-2️⃣ Capteurs
-Nom	Mesure	Interface	Modèle
-HX711	Poids de la ruche (±100g)	Analogique	HX711
-DHT22/DHT11	Température et humidité	Digital	DHT22
-SEN0562	Luminosité extérieure (lux)	I2C (0x39/0x29)	SEN0562
-3️⃣ Communication & Stockage
+## 📋 Objectifs  
 
-    LoRaWAN (MKR WAN 1310 → TTN → BEEP Monitor)
-    MQTT (pour envoyer les données à Ubidots)
+- ✅ Surveiller la **santé des abeilles** et leur **activité**.  
+- ✅ Alerter en cas d’**essaimage**, de **baisse de poids**, ou de **vol de la ruche**.  
+- ✅ **Stocker et visualiser les données** sur **Ubidots STEM** puis **BEEP Monitor**.  
+- ✅ Un **système autonome**, alimenté par **batterie LiPo et panneaux solaires**.  
 
-🛠️ Installation et Configuration
-1️⃣ Pré-requis
+---
 
-Avant de commencer, installe :
+## 🛠️ Matériel Utilisé  
 
-    Arduino IDE
-    Bibliothèques Arduino :
+### 1️⃣ Microcontrôleur  
+- **Arduino MKR WAN 1310** (*LPWAN LoRaWAN intégré*)  
 
-    Arduino_LoRa
-    Adafruit_Sensor
-    BH1750
-    DHT
+### 2️⃣ Capteurs  
 
+| **Nom**       | **Mesure**                  | **Interface**  | **Modèle**  |
+|--------------|----------------------------|--------------|------------|
+| **HX711**    | Poids de la ruche (±100g)  | Analogique   | HX711      |
+| **DHT22**    | Température et humidité    | Digital      | DHT22      |
+| **SEN0562**  | Luminosité extérieure (lux) | I2C (0x39/0x29) | SEN0562 |
+
+### 3️⃣ Communication & Stockage  
+
+- **LoRaWAN** (MKR WAN 1310 → TTN → BEEP Monitor)  
+- **MQTT** (pour envoyer les données à Ubidots)  
+
+---
+
+## 🛠️ Installation et Configuration  
+
+### 1️⃣ Pré-requis  
+
+Avant de commencer, installe :  
+- **[Arduino IDE](https://www.arduino.cc/en/software)**  
+- **Bibliothèques Arduino** :  
+
+```sh
+Arduino_LoRa
+Adafruit_Sensor
+BH1750
+DHT
 2️⃣ Câblage des capteurs
 Capteur	VCC	GND	Signal	Interface
 HX711	3.3V	GND	A0	Analogique
@@ -55,9 +68,10 @@ SEN0562	3.3V	GND	SDA → 11, SCL → 12	I2C
 
     Ouvre le Moniteur Série (115200 bauds)
     Vérifie que chaque capteur renvoie des valeurs correctes :
-        Luminosité : Luminosité : 120 lux
-        Température : Température : 25.3°C
-        Poids : Poids : 12.4 kg
+
+Luminosité : 120 lux
+Température : 25.3°C
+Poids : 12.4 kg
 
 3️⃣ Vérifier l’envoi des données
 
@@ -83,28 +97,31 @@ SEN0562	3.3V	GND	SDA → 11, SCL → 12	I2C
 🔔 Envoi des notifications via SMS/Email (Ubidots Webhook).
 📦 Roadmap & Améliorations
 
-✅ Prototype sur breadboard terminé.
-✅ Test Unitaire de chaque capteur opérationnelle.
-✅ Connexion TTN opérationnelle.
-🔲 Conception du PCB et boîtier étanche pour extérieur.
-🔲 Optimisation de la consommation énergétique (deep sleep).
+    ✅ Prototype sur breadboard terminé.
+    ✅ Test unitaire de chaque capteur opérationnel.
+    ✅ Connexion TTN opérationnelle.
+    🔲 Conception du PCB et boîtier étanche pour extérieur.
+    🔲 Optimisation de la consommation énergétique (deep sleep).
+
 👥 Contributeurs
 
-    Léa LACOUTURE - Cheffe de projet 👩‍💻
-    Amine OUMERT - Specialist, Implémenter
-    Gloire A Dieu DEMBI - Plant, Teamworker
+    👩‍💻 Léa LACOUTURE - Cheffe de projet
+    👨‍💻 Amine OUMERT - Specialist, Implémenter
+    👨‍💻 Gloire A Dieu DEMBI - Plant, Teamworker
 
-    [Équipe EI4 FISA : Polytech Sorbonne - Système Embarqué IoT]
+📌 Équipe EI4 FISA : Polytech Sorbonne - Système Embarqué IoT
 
-🔗 Contact : 📧 lealacouture@live.fr
-             📧 oumertamine3@gmail.com
-             📧 gloiredembi@gmail.com
+📧 Contact :
+
+    📩 lealacouture@live.fr
+    📩 oumertamine3@gmail.com
+    📩 gloiredembi@gmail.com
 
 📌 Résumé rapide
 
-🚀 Un système IoT complet pour surveiller la santé des ruches en temps réel.
-📊 Affichage des données sur Ubidots et BEEP Monitor.
-📡 Communication via LoRaWAN & MQTT.
-⚠️ Alertes automatiques en cas de comportement anormal.
+    🚀 Un système IoT complet pour surveiller la santé des ruches en temps réel.
+    📊 Affichage des données sur Ubidots et BEEP Monitor.
+    📡 Communication via LoRaWAN & MQTT.
+    ⚠️ Alertes automatiques en cas de comportement anormal.
 
 🐝 Sauvegardons les abeilles avec la technologie ! 🌍💡
