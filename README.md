@@ -34,8 +34,7 @@ Des **alertes (SMS/email)** sont envoyées en cas de comportement anormal.
 
 ### 3️⃣ Communication & Stockage  
 
-- **LoRaWAN** (MKR WAN 1310 → TTN → BEEP Monitor)  
-- **MQTT** (pour envoyer les données à Ubidots)  
+- **LoRaWAN** (MKR WAN 1310 → TTN → Ubidots/BEEP Monitor)  
 
 ---
 
