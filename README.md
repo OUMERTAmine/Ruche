@@ -1,5 +1,5 @@
 # 📌 Open Ruche - Suivi Connecté des Abeilles
-### Un projet IoT pour surveiller la santé des ruches en temps réel 🐝🛁
+### Un projet IoT pour surveiller la santé des ruches en temps réel 🐝
 
 ---
 
