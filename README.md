@@ -1,5 +1,5 @@
 # 📌 Open Ruche - Suivi Connecté des Abeilles
-### Un projet IoT pour surveiller la santé des ruches en temps réel 🐝🛁
+### Un projet IoT pour surveiller la santé des ruches en temps réel 🐝
 
 ---
 
@@ -34,8 +34,7 @@ Des **alertes (SMS/email)** sont envoyées en cas de comportement anormal.
 
 ### 3️⃣ Communication & Stockage  
 
-- **LoRaWAN** (MKR WAN 1310 → TTN → BEEP Monitor)  
-- **MQTT** (pour envoyer les données à Ubidots)  
+- **LoRaWAN** (MKR WAN 1310 → TTN → Ubidots/BEEP Monitor)  
 
 ---
 
