@@ -1,47 +1,42 @@
-#include <MKRWAN.h>          // Communication LoRa
-#include <Wire.h>            // Communication I2C
-#include "ArduinoLowPower.h" // Gestion de l'alimentation
-#include <DHT.h>             // Capteurs DHT
-#include <OneWire.h>         // Communication 1-Wire (DS18B20)
-#include <DallasTemperature.h> // Capteur DS18B20
-#include <BH1750.h>          // Capteur de luminosité BH1750
-#include "HX711.h"           // Capteur de poids HX711
+#include <MKRWAN.h>
+#include <Wire.h>
+#include "ArduinoLowPower.h"
+#include <DHT.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <BH1750.h>
+#include "HX711.h"
+#include <FlashStorage.h>
 
 ////////////////////////
 ///     SETUP      ///
 ////////////////////////
 
-///// INITIALISATION LORAWAN - CONNEXION À TTN /////
 LoRaModem modem;
 #define SECRET_APP_EUI "0000000000000001"
 #define SECRET_APP_KEY "8062D07A1C984423278A7D938C73E534"
 String appEui = SECRET_APP_EUI;
 String appKey = SECRET_APP_KEY;
 
-///// INITIALISATION DES CAPTEURS /////
-// Définition des broches
-#define DHT22_PIN 2   // Capteur DHT22
-#define DHT11_PIN 3   // Capteur DHT11  dht 22 a l'extérieur
-#define DS18B20_PIN 7 // Capteur DS18B20
-#define LOADCELL_DOUT_PIN 0  // Data HX711
-#define LOADCELL_SCK_PIN 1   // Clock HX711
-#define BATTERY_SENSOR_PIN A1 // Mesure de la tension batterie
+#define DHT22_PIN 2
+#define DHT11_PIN 3
+#define DS18B20_PIN 7
+#define LOADCELL_DOUT_PIN 0
+#define LOADCELL_SCK_PIN 1
+#define BATTERY_SENSOR_PIN A1
 
-// Résistances du pont diviseur
-const float R1 = 82.0;  // Résistance 82kΩ
-const float R2 = 22.0;  // Résistance 22kΩ
-const float Vref = 3.3; // Référence ADC
-const int resolution = 4095; // Résolution ADC 12 bits
+const float R1 = 82.0;
+const float R2 = 22.0;
+const float Vref = 3.3;
+const int resolution = 1023;
 
-// Initialisation des capteurs
 DHT dht22(DHT22_PIN, DHT22);
 DHT dht22_outside(DHT11_PIN, DHT22);
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature ds18b20(&oneWire);
-BH1750 lightMeter; // Capteur BH1750
-HX711 scale; // Capteur de poids HX711
+BH1750 lightMeter;
+HX711 scale;
 
-///// VARIABLES GLOBALES /////
 float tempDHT22, humDHT22;
 float tempDHT11, humDHT11;
 float tempDS18B20;
@@ -49,97 +44,99 @@ float luminosite;
 float poids;
 float batteryVoltage;
 int batteryPercentage;
-float calibration_factor = 30226.0;  // Facteur de calibration HX711
-byte buffer[16]; // Stocke les valeurs à envoyer (2 octets * 8 valeurs)
+float calibration_factor = 30226.0;
+byte buffer[16];
 
-///// FONCTION DE CONNEXION À TTN /////
+// Stockage du tare HX711 en flash
+FlashStorage(tareStorage, long);
+
 void connection() {
   if (!modem.begin(EU868)) {
     Serial.println("Échec de l'initialisation LoRa !");
     while (1);
   }
-  Serial.print("Version du module : ");
+  Serial.print("Version module : ");
   Serial.println(modem.version());
   Serial.print("Device EUI : ");
   Serial.println(modem.deviceEUI());
 
   if (!modem.joinOTAA(appEui, appKey)) {
-    Serial.println("Échec de la connexion à TTN !");
+    Serial.println("Échec de connexion à TTN !");
     while (1);
   }
   Serial.println("Connecté à TTN !");
 }
 
-///// INITIALISATION AU DÉMARRAGE /////
 void setup() {
   Serial.begin(115200);
   Serial.println("=== Démarrage du système ===");
 
   connection();
-  
+
   dht22.begin();
   dht22_outside.begin();
-  ds18b20.begin(); // Initialisation du DS18B20
+  ds18b20.begin();
 
   Wire.begin();
   if (!lightMeter.begin()) {
-    Serial.println("Erreur : Le capteur BH1750 n'est pas détecté !");
+    Serial.println("Erreur : BH1750 non détecté !");
     while (1);
   }
-  Serial.println("Capteur BH1750 détecté avec succès.");
 
-  // Initialisation du capteur HX711 (poids)
-  Serial.println("Initialisation du capteur HX711...");
+  Serial.println("Initialisation du HX711...");
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
   delay(5000);
-  scale.tare();  
-  scale.set_scale(calibration_factor);
-  Serial.println("Capteur HX711 prêt !");
-}
 
-////////////////////////
-///      LOOP      ///
-////////////////////////
+  long tareOffset = tareStorage.read();
+  if (tareOffset == 0 || tareOffset == -1L) {
+    Serial.println("Première utilisation : calibration en cours...");
+    scale.tare(); // Mettre la balance à vide pour cette étape !
+    tareOffset = scale.get_offset();
+    tareStorage.write(tareOffset);
+    Serial.println("Tare calibré et sauvegardé !");
+  } else {
+    Serial.println("Tare trouvé en mémoire, utilisation directe.");
+    scale.set_offset(tareOffset);
+  }
+
+  scale.set_scale(calibration_factor);
+}
 
 void measureBattery() {
-  Serial.println("=== Lecture de la tension batterie ===");
   int rawValue = analogRead(BATTERY_SENSOR_PIN);
-  float Vmesure = (rawValue * Vref) / resolution; // Conversion en tension
-  batteryVoltage = Vmesure * ((R1 + R2) / R2); // Calcul de la tension batterie
+  float Vmesure = (rawValue * Vref) / resolution;
+  batteryVoltage = Vmesure * 1.28;
   batteryPercentage = getBatteryPercentage(batteryVoltage);
-
-  Serial.print("Tension Batterie: ");
-  Serial.print(batteryVoltage, 2);
-  Serial.print("V - Charge: ");
-  Serial.print(batteryPercentage);
-  Serial.println("%");
-
-  buildMessage(batteryPercentage, 14); // Stockage en 2 octets
+  buildMessage(batteryPercentage, 14);
 }
 
-// Fonction pour convertir la tension en pourcentage de charge
 int getBatteryPercentage(float voltage) {
-  if (voltage >= 4.2) return 100;   
-  else if (voltage >= 4.1) return 90;
-  else if (voltage >= 4.0) return 80;
-  else if (voltage >= 3.9) return 70;
-  else if (voltage >= 3.8) return 60;
-  else if (voltage >= 3.7) return 50;
-  else if (voltage >= 3.6) return 40;
-  else if (voltage >= 3.5) return 30;
+  if (voltage >= 4.2) return 100;
+  else if (voltage >= 4.1) return 95;
+  else if (voltage >= 4.05) return 90;
+  else if (voltage >= 4.0) return 85;
+  else if (voltage >= 3.95) return 80;
+  else if (voltage >= 3.9) return 75;
+  else if (voltage >= 3.85) return 70;
+  else if (voltage >= 3.8) return 65;
+  else if (voltage >= 3.75) return 60;
+  else if (voltage >= 3.7) return 55;
+  else if (voltage >= 3.65) return 50;
+  else if (voltage >= 3.6) return 45;
+  else if (voltage >= 3.55) return 40;
+  else if (voltage >= 3.5) return 35;
+  else if (voltage >= 3.45) return 30;
   else if (voltage >= 3.4) return 20;
-  else if (voltage >= 3.3) return 10;
+  else if (voltage >= 3.35) return 10;
+  else if (voltage >= 3.3) return 5;
   else return 0;
 }
 
 void measureDHTSensors() {
-  Serial.println("=== Lecture des capteurs DHT ===");
   humDHT22 = dht22.readHumidity();
   tempDHT22 = dht22.readTemperature();
   humDHT11 = dht22_outside.readHumidity();
   tempDHT11 = dht22_outside.readTemperature();
-
-  Serial.print("Température DHT22 : "); Serial.print(tempDHT22); Serial.println(" °C");
   buildMessage(tempDHT22, 0);
   buildMessage(humDHT22, 2);
   buildMessage(tempDHT11, 4);
@@ -147,24 +144,18 @@ void measureDHTSensors() {
 }
 
 void measureDS18B20() {
-  Serial.println("=== Lecture du capteur DS18B20 ===");
   ds18b20.requestTemperatures();
   tempDS18B20 = ds18b20.getTempCByIndex(0);
-  Serial.print("Température DS18B20 : "); Serial.print(tempDS18B20); Serial.println(" °C");
   buildMessage(tempDS18B20, 8);
 }
 
 void measureLuminosity() {
-  Serial.println("=== Lecture du capteur de luminosité BH1750 ===");
   luminosite = lightMeter.readLightLevel();
-  Serial.print("Luminosité : "); Serial.print(luminosite); Serial.println(" Lux");
   buildMessage(luminosite, 10);
 }
 
 void measureWeight() {
-  Serial.println("=== Lecture du capteur de poids HX711 ===");
   poids = scale.get_units(10);
-  Serial.print("Poids mesuré : "); Serial.print(poids, 2); Serial.println(" kg");
   buildMessage(poids, 12);
 }
 
@@ -174,53 +165,41 @@ void buildMessage(float donnee_float, int index) {
   buffer[index + 1] = (donnee_short >> 8) & 0xFF;
 }
 
-void sendMessage() {
-  Serial.println("=== ENVOI DES DONNÉES LoRa ===");
+bool sendMessageSafe() {
   modem.beginPacket();
   modem.write(buffer, 16);
-  modem.endPacket(true);
+  int err = modem.endPacket(true);
+  return err > 0;
 }
-
-/*void loop() {
-  measureDHTSensors();
-  measureDS18B20();
-  measureLuminosity();
-  measureWeight();
-  measureBattery();
-  sendMessage();
-  LowPower.deepSleep(75000); //  deepSleep c'est en ms
- // delay(5000);
-}
-*/
-
-
 
 void loop() {
-  // Lecture des capteurs
+  if (modem.getDataRate() == -1) {
+    Serial.println("Connexion LoRa perdue, reconnexion...");
+    connection();
+  }
+
   measureDHTSensors();
   measureDS18B20();
   measureLuminosity();
   measureWeight();
   measureBattery();
 
-  // Envoi des données LoRa
-  sendMessage();
+  if (!sendMessageSafe()) {
+    Serial.println("Envoi LoRa échoué !");
+    connection(); 
+    connection();
+  } else {
+    Serial.println("Données envoyées !");
+  }
 
-  // Désactiver LoRa avant de dormir
-  modem.sleep();
-
-
-  // Désactiver capteurs avant sommeil
   Wire.end();
   scale.power_down();
+  modem.sleep();
 
-  Serial.println("Passage en Deep Sleep...");
-  LowPower.deepSleep(300000); // Mode veille profonde
+  Serial.println("Deep Sleep 10 minutes...");
+  LowPower.deepSleep(600000); 
 
-  // Réveil : réactiver les capteurs
   Serial.println("Réveil !");
   Wire.begin();
   scale.power_up();
-  connection();  // Relancer LoRa après le réveil
 }
-
